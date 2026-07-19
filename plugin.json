@@ -1,0 +1,72 @@
+{
+  "name": "M3U Timeshift",
+  "version": "0.3.0",
+  "description": "Catch-up support for standard M3U sources with timeshift and stream metadata propagation.",
+  "author": "Dispatcharr plugin",
+  "fields": [
+    {
+      "id": "enabled",
+      "label": "Enabled",
+      "type": "boolean",
+      "default": true,
+      "help_text": "Enable M3U timeshift scanning and playback hooks."
+    },
+    {
+      "id": "debug_mode",
+      "label": "Debug mode",
+      "type": "boolean",
+      "default": false,
+      "help_text": "Write extra diagnostic logs with redacted upstream URLs."
+    },
+    {
+      "id": "utc_param_name",
+      "label": "UTC parameter name",
+      "type": "string",
+      "default": "utc",
+      "help_text": "Query parameter appended to M3U catch-up URLs."
+    },
+    {
+      "id": "max_days_cap",
+      "label": "Maximum archive days",
+      "type": "number",
+      "default": 30,
+      "min": 1,
+      "max": 365,
+      "step": 1,
+      "help_text": "Clamp provider timeshift values to this many days."
+    },
+    {
+      "id": "scan_on_m3u_refresh",
+      "label": "Scan after M3U refresh",
+      "type": "boolean",
+      "default": true,
+      "help_text": "Automatically rescan standard M3U streams after refresh events."
+    },
+    {
+      "id": "pace_hls_archive",
+      "label": "Pace HLS archive",
+      "type": "boolean",
+      "default": true,
+      "help_text": "Throttle bridged HLS catch-up to EXTINF timing so Active Connections stays aligned with playback instead of finishing after the buffer is downloaded."
+    }
+  ],
+  "actions": [
+    {
+      "id": "scan",
+      "label": "Scan M3U timeshift streams",
+      "description": "Update catch-up flags from standard M3U timeshift attributes.",
+      "button_label": "Scan"
+    },
+    {
+      "id": "scan_after_m3u_refresh",
+      "label": "Scan after M3U refresh",
+      "description": "Update M3U timeshift flags after an M3U refresh.",
+      "events": ["m3u_refresh"]
+    },
+    {
+      "id": "stop",
+      "label": "Stop",
+      "description": "Disable plugin hooks in this process."
+    }
+  ]
+}
