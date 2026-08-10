@@ -135,7 +135,7 @@ def _handoff_plugin_stream_to_native(request, user, channel):
     or after the plugin is disabled.
     """
     try:
-        from apps.proxy.live_proxy.utils import get_client_ip
+        from dispatcharr.utils import get_client_ip
         from apps.timeshift import views as timeshift_views
         from core.utils import RedisClient
 
@@ -321,7 +321,6 @@ def _serve_plugin_m3u_stream(
         from apps.m3u.connection_pool import release_profile_slot, reserve_profile_slot
         from apps.proxy.utils import check_user_stream_limits
         from apps.proxy.live_proxy.url_utils import transform_url
-        from apps.proxy.live_proxy.utils import get_client_ip
         from apps.timeshift import views as timeshift_views
         from apps.timeshift.helpers import resolve_catchup_duration
         from apps.timeshift.redis_keys import (
@@ -330,7 +329,7 @@ def _serve_plugin_m3u_stream(
             virtual_channel_id as make_virtual_channel_id,
         )
         from core.utils import RedisClient
-        from dispatcharr.utils import network_access_allowed
+        from dispatcharr.utils import get_client_ip, network_access_allowed
     except Exception:
         logger.exception("M3U timeshift imports failed")
         return HttpResponseBadRequest("Cannot build timeshift URL")

@@ -1,6 +1,6 @@
 # M3U Timeshift
 
-Version: `0.3.0`
+Version: `0.4.0`
 
 Dispatcharr plugin that adds catch-up support for standard M3U playlists using
 the `timeshift` EXTINF attribute and propagates available stream metadata.

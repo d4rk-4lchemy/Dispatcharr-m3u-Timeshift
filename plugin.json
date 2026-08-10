@@ -1,6 +1,6 @@
 {
   "name": "M3U Timeshift",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "description": "Catch-up support for standard M3U sources with timeshift and stream metadata propagation.",
   "author": "Dispatcharr plugin",
   "fields": [

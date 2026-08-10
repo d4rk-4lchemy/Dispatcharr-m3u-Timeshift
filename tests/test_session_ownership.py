@@ -194,12 +194,6 @@ def test_native_handoff_stops_an_active_plugin_stream(
 
     apps = types.ModuleType("apps")
     apps.__path__ = []
-    proxy = types.ModuleType("apps.proxy")
-    proxy.__path__ = []
-    live_proxy = types.ModuleType("apps.proxy.live_proxy")
-    live_proxy.__path__ = []
-    live_utils = types.ModuleType("apps.proxy.live_proxy.utils")
-    live_utils.get_client_ip = lambda _request: "192.0.2.1"
     timeshift = types.ModuleType("apps.timeshift")
     timeshift.__path__ = []
     views = types.ModuleType("apps.timeshift.views")
@@ -209,21 +203,21 @@ def test_native_handoff_stops_an_active_plugin_stream(
     core.__path__ = []
     core_utils = types.ModuleType("core.utils")
     core_utils.RedisClient = types.SimpleNamespace(get_client=lambda: redis)
-    apps.proxy = proxy
-    proxy.live_proxy = live_proxy
-    live_proxy.utils = live_utils
+    dispatcharr = types.ModuleType("dispatcharr")
+    dispatcharr.__path__ = []
+    dispatcharr_utils = types.ModuleType("dispatcharr.utils")
+    dispatcharr_utils.get_client_ip = lambda _request: "192.0.2.1"
     apps.timeshift = timeshift
     timeshift.views = views
     core.utils = core_utils
     for name, module in {
         "apps": apps,
-        "apps.proxy": proxy,
-        "apps.proxy.live_proxy": live_proxy,
-        "apps.proxy.live_proxy.utils": live_utils,
         "apps.timeshift": timeshift,
         "apps.timeshift.views": views,
         "core": core,
         "core.utils": core_utils,
+        "dispatcharr": dispatcharr,
+        "dispatcharr.utils": dispatcharr_utils,
     }.items():
         monkeypatch.setitem(sys.modules, name, module)
     monkeypatch.setattr(hooks, "_plugin_session_is_owned_by", lambda *_args: True)
