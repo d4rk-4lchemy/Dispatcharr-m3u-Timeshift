@@ -1,6 +1,7 @@
 """Runtime hook for Dispatcharr catch-up playback."""
 
 import logging
+import math
 import threading
 import time
 
@@ -627,6 +628,10 @@ def _serve_hls_archive_as_ts(
             virtual_channel_id=virtual_channel_id,
             stream_generation=stream_generation,
             pace_segments=bool(_settings.get("pace_hls_archive", True)),
+            playback_rate=_hls_archive_rate(_settings.get("hls_archive_rate", 5)),
+            burst_seconds=_hls_archive_burst_seconds(
+                _settings.get("hls_archive_burst_seconds", 60)
+            ),
             reserved_profile_id=getattr(reserved_profile, "id", None),
             release_profile_slot=release_profile_slot,
             cleanup=cleanup_hls_stream,
@@ -960,6 +965,29 @@ def _select_hls_segments(segments, max_seconds):
     return selected
 
 
+def _hls_archive_rate(value):
+    """Accept a positive, finite multiplier; invalid settings use the default."""
+    try:
+        rate = float(value)
+    except (TypeError, ValueError, OverflowError):
+        return 5.0
+    return rate if math.isfinite(rate) and rate > 0 else 5.0
+
+
+def _hls_archive_burst_seconds(value):
+    """The burst budget is measured in media seconds, independently per request."""
+    try:
+        seconds = float(value)
+    except (TypeError, ValueError, OverflowError):
+        return 60.0
+    return seconds if math.isfinite(seconds) and seconds >= 0 else 60.0
+
+
+def _hls_paced_elapsed(media_seconds, burst_remaining, playback_rate):
+    burst = min(media_seconds, burst_remaining)
+    return burst / playback_rate + (media_seconds - burst)
+
+
 def _iter_hls_segments_as_ts(
     segments,
     user_agent,
@@ -974,6 +1002,8 @@ def _iter_hls_segments_as_ts(
     reserved_profile_id,
     release_profile_slot,
     cleanup,
+    playback_rate=5.0,
+    burst_seconds=60.0,
 ):
     session = requests.Session()
     headers = {"Accept-Encoding": "identity"}
@@ -989,6 +1019,7 @@ def _iter_hls_segments_as_ts(
             stop_key = None
     bytes_since_heartbeat = 0
     last_heartbeat = time.time()
+    burst_remaining = burst_seconds
     try:
         for index, segment in enumerate(segments):
             if _hls_stop_requested(
@@ -1048,10 +1079,13 @@ def _iter_hls_segments_as_ts(
                             and segment_content_length
                             and segment_content_length > 0
                         ):
-                            target_elapsed = min(
+                            media_sent = min(
                                 segment_duration,
                                 segment_duration
                                 * (segment_bytes_sent / float(segment_content_length)),
+                            )
+                            target_elapsed = _hls_paced_elapsed(
+                                media_sent, burst_remaining, playback_rate
                             )
                             stopped, last_heartbeat, bytes_since_heartbeat = (
                                 _pace_hls_until(
@@ -1084,7 +1118,9 @@ def _iter_hls_segments_as_ts(
                 and not segment_content_length
             ):
                 stopped, last_heartbeat, bytes_since_heartbeat = _pace_hls_segment(
-                    segment_duration=float(segment.get("duration") or 0.0),
+                    segment_duration=_hls_paced_elapsed(
+                        segment_duration, burst_remaining, playback_rate
+                    ),
                     segment_started_at=segment_started_at,
                     pending_bytes=bytes_since_heartbeat,
                     redis_client=redis_client,
@@ -1098,6 +1134,7 @@ def _iter_hls_segments_as_ts(
                 )
                 if stopped:
                     break
+            burst_remaining = max(0.0, burst_remaining - segment_duration)
     finally:
         cleanup(bytes_since_heartbeat)
         session.close()

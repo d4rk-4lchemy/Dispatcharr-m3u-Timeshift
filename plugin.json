@@ -1,7 +1,7 @@
 {
   "name": "M3U Timeshift",
-  "version": "0.4.0",
-  "description": "Catch-up support for standard M3U sources with timeshift and stream metadata propagation.",
+  "version": "0.5.0",
+  "description": "Catch-up support for standard M3U sources with timeshift or tvg-rec and stream metadata propagation.",
   "author": "Dispatcharr plugin",
   "fields": [
     {
@@ -47,14 +47,32 @@
       "label": "Pace HLS archive",
       "type": "boolean",
       "default": true,
-      "help_text": "Throttle bridged HLS catch-up to EXTINF timing so Active Connections stays aligned with playback instead of finishing after the buffer is downloaded."
+      "help_text": "Limit bridged HLS catch-up output using EXTINF durations and the HLS archive speed setting. Disable to send as fast as the source and client allow."
+    },
+    {
+      "id": "hls_archive_rate",
+      "label": "HLS archive speed",
+      "type": "number",
+      "default": 5,
+      "min": 0.1,
+      "step": 0.1,
+      "help_text": "Seconds of video sent per real second during the initial burst when pacing is enabled. Default 5; use 1 for real-time delivery. Applies to new playback requests."
+    },
+    {
+      "id": "hls_archive_burst_seconds",
+      "label": "HLS initial burst duration (seconds)",
+      "type": "number",
+      "default": 60,
+      "min": 0,
+      "step": 1,
+      "help_text": "Seconds of video sent at HLS archive speed before returning to 1x. Default 60; 0 means 1x from the start. Each new playback request, including a timestamp seek, gets a fresh budget."
     }
   ],
   "actions": [
     {
       "id": "scan",
       "label": "Scan M3U timeshift streams",
-      "description": "Update catch-up flags from standard M3U timeshift attributes.",
+      "description": "Update catch-up flags from standard M3U timeshift or tvg-rec attributes.",
       "button_label": "Scan"
     },
     {

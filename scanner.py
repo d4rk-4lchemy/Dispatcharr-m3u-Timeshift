@@ -156,6 +156,22 @@ def parse_timeshift_days(value, max_days_cap=30):
     return min(days, max(1, cap))
 
 
+def m3u_timeshift_days(properties, max_days_cap=30):
+    """Return archive days advertised by either supported M3U marker.
+
+    ``timeshift`` is the original provider attribute. Some providers use
+    ``tvg-rec`` for the same purpose, so accept it as a fallback while keeping
+    ``timeshift`` authoritative when both attributes are present.
+    """
+    if not isinstance(properties, dict):
+        return 0
+    for attribute in ("timeshift", "tvg-rec", "tvg_rec"):
+        days = parse_timeshift_days(properties.get(attribute), max_days_cap)
+        if days > 0:
+            return days
+    return 0
+
+
 def native_m3u_archive_days(properties):
     """Return the provider-advertised native M3U archive depth, if any.
 
@@ -253,7 +269,7 @@ def scan_timeshift_streams(account_id=None, settings=None):
                 stream.stream_stats = merged_stats
                 stream.stream_stats_updated_at = timezone.now()
 
-            days = parse_timeshift_days(props.get("timeshift"), max_days_cap)
+            days = m3u_timeshift_days(props, max_days_cap)
             was_marked = props.get(PLUGIN_MARKER) is True
 
             if days > 0:

@@ -3,6 +3,7 @@ from scanner import (
     as_json_object,
     clear_plugin_timeshift_properties,
     merge_m3u_stream_stats,
+    m3u_timeshift_days,
     native_m3u_archive_days,
     parse_timeshift_days,
     PLUGIN_ARCHIVE_VALUES_MARKER,
@@ -24,6 +25,14 @@ def test_non_positive_and_invalid_values_are_zero():
     assert parse_timeshift_days("-2") == 0
     assert parse_timeshift_days("abc") == 0
     assert parse_timeshift_days(None) == 0
+
+
+def test_tvg_rec_is_accepted_as_a_timeshift_marker():
+    assert m3u_timeshift_days({"tvg-rec": "5"}) == 5
+
+
+def test_timeshift_takes_precedence_over_tvg_rec():
+    assert m3u_timeshift_days({"timeshift": "2", "tvg-rec": "5"}) == 2
 
 
 def test_m3u_attributes_are_mapped_to_stream_stats():
